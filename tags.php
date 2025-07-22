@@ -3,7 +3,6 @@
 session_start();
 
 include 'init.php';
-// echo 'Categories Page<br>Your Category ID is <strong>' . $_GET['pageid'] . '</strong> and Category Name is <strong>' . str_replace('-', ' ', $_GET['pagename']) . '</strong>'; // Coming from categories in header.php
 ?>
 
     <div class="container">
@@ -12,21 +11,29 @@ include 'init.php';
             // $category = isset($_GET['pageid']) && is_numeric($_GET['pageid']) ? intval($_GET['pageid']) : 0;
             if (isset($_GET['name'])) {
                 $tag = $_GET['name'];
-                echo '<h1 class="text-center">' . $tag . '</h1>';
+                //XSS - ADD htmlspecialchars
+                echo '<h1 class="text-center">' . htmlspecialchars($tag) . '</h1>';
+
                 // $tagItems = getAllFrom('*', '`items`', '`Item_ID`', "WHERE `tags` like '%$tag%'", ' AND `Approve` = 1'); // Show all items that belong to that specific tag
-                $tagItems = getAllFrom('*', '`items`', '`Item_ID`', "WHERE `tags` like " . "\"%$tag%\"", ' AND `Approve` = 1'); // Show all items that belong to that specific tag
+                //SQL INJECTION - USE PDO
+                $stmt = $con->prepare("SELECT * FROM `items` WHERE `tags` LIKE ? AND `Approve` = 1");
+                $likeTag = '%' . $tag . '%';
+                $stmt->execute([$likeTag]);
+                $tagItems = $stmt->fetchAll();
                 // echo '<pre>', var_dump($tagItems),'</pre>';
                 // exit;
 
                 foreach ($tagItems as $item) {
                     echo '<div class="col-sm-6 col-md-3">';
                         echo '<div class="thumbnail item-box">';
-                            echo '<span class="price-tag">' . $item['Price'] . '</span>';
-                            echo '<img class="img-responsive" src="img.jpg" alt="random image">';
+                        //XSS - ADD htmlspecialchars
+                        echo '<span class="price-tag">' . htmlspecialchars($item['Price']) . '</span>';
+                        echo '<img class="img-responsive" src="img.jpg" alt="random image">';
                             echo '<div class="caption">';
-                                echo '<h3><a href="items.php?itemid=' . $item['Item_ID'] . '">' . $item['Name'] . '</a></h3>';
-                                echo '<p>' . $item['Description'] . '</p>';
-                                echo '<div class="date">' . $item['Add_Date'] . '</div>';
+                                //XSS - ADD htmlspecialchars + cast numeric IDs
+                                echo '<h3><a href="items.php?itemid=' . (int)$item['Item_ID'] . '">' . htmlspecialchars($item['Name']) . '</a></h3>';
+                                echo '<p>' . htmlspecialchars($item['Description']) . '</p>';
+                                echo '<div class="date">' . htmlspecialchars($item['Add_Date']) . '</div>';
                             echo '</div>';
                         echo '</div>';
                     echo '</div>';
@@ -37,8 +44,6 @@ include 'init.php';
 ?>      
         </div>
     </div>
-
-
 
 <?php
     // Footer

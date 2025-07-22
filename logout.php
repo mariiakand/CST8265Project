@@ -2,14 +2,12 @@
 
 session_start();
 
+session_unset();
+session_destroy();
 
 
-session_unset(); // Unsetting the data (or the session variable)
-session_destroy(); // Destroying the session
-
-
-
-echo "You have logged out and will be redirected after 3 secondes...";
+//XSS - ADD htmlspecialchars
+echo htmlspecialchars("You have logged out and will be redirected after 3 secondes...", ENT_QUOTES, 'UTF-8');
 // header('Location: index.php');
 
 

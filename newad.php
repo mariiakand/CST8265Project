@@ -1,9 +1,7 @@
 <?php
-// This is a PROTECTED ROUTE!
-
 session_start();
 
-$pageTitle = 'Create New Item'; // Check eCommerce/includes/templates/header.php file    AND    eCommerce/includes/functions/functions.php file
+$pageTitle = 'Create New Item';
 
 include 'init.php';
 
@@ -11,27 +9,28 @@ include 'init.php';
 // Protected Routes (Protecting Routes): Note This page is a Protected Route! We protect this route by checking for if there's a user stored in the Session. If there's a user stored in the Session, allow the user to access this page, and if not, redirect the website guest/visitor to the eCommerce\login.php page
 if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allow the user to access this page
         if ($_SERVER['REQUEST_METHOD'] == 'POST') { // to make sure the user is not coming by URL copy/paste i.e. not coming from a GET Request    // if the HTML Form is submitted with a POST method/verb HTTP Request
-
-            // Note: We implemented BOTH client-side validation and server-side validation
+        // NOTE: application has BOTH client-side validation and server-side validation
 
             // HTML Form Server-side Validation
             $formErrors = array(); // to print Validation Errors in the errors div down below in this page
 
-            // $name     = filter_var($_POST['name'], FILTER_SANITIZE_STRING); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
-            $name = htmlspecialchars($_POST['name']); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
+            // $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING); 
+            // XSS - ADD htmlspecialchars
+            $name = htmlspecialchars($_POST['name']); 
 
-            // $desc     = filter_var($_POST['description'], FILTER_SANITIZE_STRING); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
-            $desc = htmlspecialchars($_POST['description']); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
+            // $desc = filter_var($_POST['description'], FILTER_SANITIZE_STRING); 
+            $desc = htmlspecialchars($_POST['description']); 
 
             $price = filter_var($_POST['price'], FILTER_SANITIZE_NUMBER_INT);
-            // $country  = filter_var($_POST['country'], FILTER_SANITIZE_STRING); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
-            $country = htmlspecialchars($_POST['country']); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
+            // $country = filter_var($_POST['country'], FILTER_SANITIZE_STRING); 
+            $country = htmlspecialchars($_POST['country']); 
 
             $status   = filter_var($_POST['status'], FILTER_SANITIZE_NUMBER_INT);
             $category = filter_var($_POST['category'], FILTER_SANITIZE_NUMBER_INT);
-            // $tags     = filter_var($_POST['tags'], FILTER_SANITIZE_STRING); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
-            $tags = htmlspecialchars($_POST['tags']); // https://www.php.net/manual/en/filter.filters.sanitize.php#:~:text=FILTER_FLAG_NO_ENCODE_QUOTES.%20(Deprecated%20as%20of%20PHP%208.1.0%2C%20use%20htmlspecialchars()%20instead.)
-
+            
+            // $tags = filter_var($_POST['tags'], FILTER_SANITIZE_STRING); 
+            // XSS - ADD htmlspecialchars
+            $tags = htmlspecialchars($_POST['tags']); 
 
             if (strlen($name) < 4) {
                 $formErrors[] = 'Item Title must be at least 4 Characters';
@@ -59,9 +58,10 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
 
             // Checking if there are no errors, then proceeding to add/INSERT operation
             if (empty($formErrors)) { // means if there are no errors, then it is OKAY
+                
                 //Inserting User info into database
+                //SQL INJECTION - USE PDO
                 $stmt = $con->prepare('INSERT INTO `items` (`Name`, `Description`, `Price`, `Country_Made`, `Status`, `Add_Date`, `Cat_ID`, `Member_ID`, `tags`) VALUES (:zname, :zdesc, :zprice, :zcountry, :zstatus, now(), :zcat, :zmember, :ztags)');
-                //echo '<pre>', print_r($stmt), '</pre><br>';
 
                 $stmt->execute(array(
                     'zname'    => $name,
@@ -92,7 +92,10 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                             <div class="col-md-8">
 
                                 <!-- HTML Form Client-side Validation -->
-                                <form class="form-horizontal main-form" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
+                                 <!-- XSS - ADD htmlspecialchars -->
+                                 <!-- iff the URL contains malicious code, htmlspecialchars() will convert special characters to HTML entities,
+  preventing the execution of injected scripts when the form posts back to the same page. -->
+                                <form class="form-horizontal main-form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
                                     <!-- Start: Name field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Name:</label>
@@ -101,6 +104,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Name field -->
+
                                     <!-- Start: Description field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Description:</label>
@@ -109,6 +113,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Description field -->
+
                                     <!-- Start: Price field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Price:</label>
@@ -117,6 +122,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Price field -->
+
                                     <!-- Start: Country field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Country:</label>
@@ -125,6 +131,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Country field -->
+
                                     <!-- Start: Status field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Status:</label>
@@ -139,6 +146,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Status field -->
+
                                     <!-- Start: Categories field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Category:</label>
@@ -155,6 +163,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Categories field -->
+
                                     <!-- Start: Tags field -->
                                     <div class="form-group form-group-lg">
                                         <label class="col-sm-3 control-label">Tags:</label>
@@ -163,6 +172,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                         </div>
                                     </div>
                                     <!-- End: Tags field -->
+
                                     <!-- Start: Submit field -->
                                     <div class="form-group form-group-lg">
                                             <div class="col-sm-offset-3 col-sm-9">
@@ -172,6 +182,7 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                     <!-- End: Submit field -->
                                     </form>
                             </div>
+                            
                             <div class="col-md-4">
                                 <div class="thumbnail item-box live-preview">
                                     <span class="price-tag">
@@ -185,7 +196,6 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                                 </div>
                             </div>
                         </div>
-                        <!--Looping(printing) through form errors-->
     <?php
                     if (!empty($formErrors)) {
                         foreach ($formErrors as $error) {
@@ -196,21 +206,17 @@ if (isset($_SESSION['user'])) { // if there's a user stored in the Session, allo
                         echo '<div class="alert alert-success">' . $succesMsg . '</div>';
                     }
     ?>
-                        <!--Looping(printing) through form errors-->                       
                     </div>
                 </div>
             </div>
         </div>
-
-
     <?php
 
-} else { // Protected Routes (Protecting Routes): if there's no user stored in the Session, redirect the website guest/visitor to the eCommerce\login.php page
+} else { 
+    // Protected Routes (Protecting Routes): if there's no user stored in the Session, redirect the website guest/visitor to the eCommerce\login.php page
     header('Location: login.php');
     exit();
 }
-
-
 
 include $tpl . 'footer.php'; 
 ?>
